@@ -9,6 +9,10 @@ from tkinter import filedialog
 temp_folder = tempfile.gettempdir()
 temp_output_template = os.path.join(temp_folder, '%(id)s.%(ext)s')
 
+# download and install ffmpeg from https://ffmpeg.org/download.html
+# and set the path to ffmpeg in the command below
+ffmpeg_path = 'E:\\bin\\ffmpreg\\bin\\'
+
 def youtube_to_mp3():
     try:
         # 1. Ask for URL input
@@ -62,7 +66,7 @@ def sanitize_filename(name, max_length=255):
 
 def convert_to_mp3(input_file, output_folder, title):
     command = [
-        'E:\\bin\\ffmpreg\\bin\\ffprobe.exe',
+        ffmpeg_path + 'ffprobe.exe',
         '-v', 'error',
         '-show_entries', 'format=duration',
         '-of', 'default=noprint_wrappers=1:nokey=1',
@@ -81,7 +85,7 @@ def convert_to_mp3(input_file, output_folder, title):
     mp3_file = os.path.join(output_folder, f"{title}.mp3")
 
     command = [
-        'E:\\bin\\ffmpreg\\bin\\ffmpeg.exe',
+        ffmpeg_path + 'ffmpeg.exe',
         '-i', input_file,
         '-vn',
         '-ab', '192k',
