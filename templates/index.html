@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube to MP3 Converter</title>
+    <style>
+        #progressBarContainer {
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 5px;
+            margin-top: 20px;
+            height: 25px;
+        }
+
+        #progressBar {
+            height: 100%;
+            width: 0%;
+            background-color: #4caf50;
+            text-align: center;
+            color: white;
+            line-height: 25px;
+            border-radius: 5px;
+        }
+    </style>
+    <script>
+        let jobId = null;
+        let checkInterval = null;
+
+        async function convertVideo() {
+            const url = document.getElementById('youtubeUrl').value;
+            const output = document.getElementById('output');
+            const progressBar = document.getElementById('progressBar');
+
+            output.innerHTML = "Starting...";
+            progressBar.style.width = "0%";
+            progressBar.innerHTML = "";
+
+            const response = await fetch('/convert', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+
+            const result = await response.json();
+            if (result.job_id) {
+                jobId = result.job_id;
+                eventSource = new EventSource(`/stream/${jobId}`);
+                eventSource.onmessage = function (event) {
+                    const eventData = event.data.split(":");
+                    const status = eventData[0];
+                    const progress = parseFloat(eventData[1]);
+                    const data = eventData[2];
+                    const output = document.getElementById('output');
+                    const progressBar = document.getElementById('progressBar');
+
+                    if (status === "downloading" || status === "converting") {
+                        output.innerHTML = `Status: ${status}...`;
+                        progressBar.style.width = progress + "%";
+                        progressBar.innerHTML = progress.toFixed(1) + "%";
+                    } else if (status === "finished") {
+                        output.innerHTML = `<a href="/download/${data}" download>Download MP3</a>`;
+                        progressBar.style.width = "100%";
+                        progressBar.innerHTML = "100%";
+                        eventSource.close();
+                    } else if (status === "error") {
+                        output.innerHTML = `<p style="color:red;">Error occurred -<br>${data}</p>`;
+                        progressBar.style.width = "0%";
+                        progressBar.innerHTML = "";
+                        eventSource.close();
+                    }
+                };
+            } else {
+                output.innerHTML = `<p style="color:red;">Error starting job</p>`;
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <h1>YouTube to MP3 Converter 🎵</h1>
+    <input type="text" id="youtubeUrl" placeholder="Enter YouTube URL" size="50">
+    <button onclick="convertVideo()">Convert</button>
+
+    <div id="progressBarContainer">
+        <div id="progressBar">0%</div>
+    </div>
+
+    <div id="output" style="margin-top:20px;"></div>
+</body>
+
+</html>
