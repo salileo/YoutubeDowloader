@@ -47,6 +47,7 @@ def download_youtube_video(youtube_url):
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': temp_output_template,
+            'ffmpeg_location': ffmpeg_path,
             'quiet': True,
         }
 
